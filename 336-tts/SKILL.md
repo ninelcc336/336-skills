@@ -1,6 +1,6 @@
 ---
 name: 336-tts
-description: 用本机 Voice Studio 的 VoxCPM2 或 CosyVoice 3 将口播稿合成为 WAV。适用于直接朗读文字稿、生成独立配音或试听。
+description: 用本机 Voice Studio 将文本合成为 WAV 音频。适用于文字转语音（TTS）、生成口播配音或试听音频。
 ---
 
 # 336-tts
