@@ -1,11 +1,11 @@
 ---
-name: 336-image-gen
-description: 仅在用户明确指定 336-image-gen 或要求使用本 Skill 时调用；使用官方 OpenAI Images API 或兼容 relay 生成和编辑图片，支持文生图、图生图、参考图、1K/2K/4K 分辨率和图片比例。
+name: image-gen-336
+description: 仅在用户明确指定 image-gen-336 或要求使用本 Skill 时调用；使用官方 OpenAI Images API 或兼容 relay 生成和编辑图片，支持文生图、图生图、参考图、1K/2K/4K 分辨率和图片比例。
 ---
 
-# 336 Image Gen
+# Image Gen 336
 
-只有当用户在当前请求中明确写出 `336-image-gen`、`$336-image-gen`、"使用这个 Skill"或等价的指定调用意图时，才使用本 Skill。普通的“生成图片”“修改图片”或“用参考图作图”请求不得自动触发本 Skill；应等待用户明确指定。指定后，agent 负责解析参数、调用内部执行器、保存产物并返回文件路径。
+只有当用户在当前请求中明确写出 `image-gen-336`、`$image-gen-336`、"使用这个 Skill"或等价的指定调用意图时，才使用本 Skill。普通的“生成图片”“修改图片”或“用参考图作图”请求不得自动触发本 Skill；应等待用户明确指定。指定后，agent 负责解析参数、调用内部执行器、保存产物并返回文件路径。
 
 ## Agent 使用契约
 

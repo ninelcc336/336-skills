@@ -1,7 +1,7 @@
 interface:
-  display_name: "336 Image Gen"
+  display_name: "Image Gen 336"
   short_description: "Generate and edit images via OpenAI-compatible APIs"
-  default_prompt: "Use $336-image-gen to generate or edit an image from my requirements."
+  default_prompt: "Use $image-gen-336 to generate or edit an image from my requirements."
 
 policy:
   allow_implicit_invocation: false

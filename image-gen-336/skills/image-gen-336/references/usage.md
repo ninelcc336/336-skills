@@ -2,7 +2,7 @@
 
 ## Agent 调用
 
-该文件描述执行器的内部参数，不要求最终用户手动执行命令。只有用户明确指定 `336-image-gen` 或要求使用本 Skill 后，Codex、Claude Code 等 agent 才应从自然语言请求提取这些值，在后台调用 `scripts/main.ts`，并在完成后返回生成文件路径；普通图片请求不得自动调用。
+该文件描述执行器的内部参数，不要求最终用户手动执行命令。只有用户明确指定 `image-gen-336` 或要求使用本 Skill 后，Codex、Claude Code 等 agent 才应从自然语言请求提取这些值，在后台调用 `scripts/main.ts`，并在完成后返回生成文件路径；普通图片请求不得自动调用。
 
 ## 参数
 
@@ -32,13 +32,13 @@
 直接提示词：
 
 ```bash
-bun 336-image-gen/scripts/main.ts --prompt "A minimal product photo" --image out/product.png
+bun image-gen-336/scripts/main.ts --prompt "A minimal product photo" --image out/product.png
 ```
 
 文件提示词：
 
 ```bash
-bun 336-image-gen/scripts/main.ts --promptfiles prompts/style.md prompts/scene.md --image out/scene.png
+bun image-gen-336/scripts/main.ts --promptfiles prompts/style.md prompts/scene.md --image out/scene.png
 ```
 
 `--prompt` 与 `--promptfiles` 可以同时使用，直接提示词会排在文件内容之前。位置参数只在没有这两个选项时作为提示词。
@@ -46,7 +46,7 @@ bun 336-image-gen/scripts/main.ts --promptfiles prompts/style.md prompts/scene.m
 ## 参考图
 
 ```bash
-bun 336-image-gen/scripts/main.ts \
+bun image-gen-336/scripts/main.ts \
   --provider official \
   --prompt "Preserve the subject identity and change the background to a clean studio" \
   --ref refs/subject.png refs/style.jpg \
@@ -88,7 +88,7 @@ bun 336-image-gen/scripts/main.ts \
 字段为 `id`、`prompt`、`promptFiles`（也接受 `promptfiles`）、`image`、`provider`、`model`、`ar`、`size`、`resolution`、`quality`、`retryPolicy` 和 `ref`。`retryPolicy` 可写 `manual` 或 `once`；`once` 只应在用户明确授权后使用。`ref` 中的本地相对路径相对 `batch.json` 解析，HTTP(S)/Data URL 原样保留。全局 CLI 值优先于任务值。任务准备失败、请求失败或保存失败只影响该任务；最终有失败任务时进程以非零状态退出。
 
 ```bash
-bun 336-image-gen/scripts/main.ts --batchfile jobs/batch.json --jobs 3 --json
+bun image-gen-336/scripts/main.ts --batchfile jobs/batch.json --jobs 3 --json
 ```
 
 默认每个任务只尝试一次；用户明确授权 `--retry-once` 或任务使用 `retryPolicy: once` 时，网络错误、429 和非安全策略 5xx 最多额外尝试一次，采用短指数退避。401、403、400 和其他 4xx 不重试；安全策略拦截即使返回 500 也不重试。agent 不得自动修改提示词后重新提交，且重试前必须提示可能产生新的 API 费用。错误正文只保留安全截断片段，API key、Authorization 和 base64 图片不会写入日志。

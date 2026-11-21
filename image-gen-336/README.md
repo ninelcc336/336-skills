@@ -1,38 +1,38 @@
-# 336 Image Gen
+# Image Gen 336
 
 一个面向 Codex、Claude Code 等 agent 的轻量级图片生成 Skill，使用官方 OpenAI Images API 或兼容该 API 的 relay 生成和编辑图片。支持文生图、图生图、本地路径/HTTP(S) URL/Data URL 参考图、分辨率、图片比例、批量任务、有限并发以及费用安全的显式重试。
 
 ## 安装
 
-将本目录作为独立 GitHub 仓库发布后，可以使用 Skills CLI 安装。当前仓库的命令是：
+使用 Skills CLI 从 `336-skills` 仓库安装：
 
 ```bash
-npx skills add ninelcc336/336-image-gen --skill 336-image-gen --global
+npx skills add ninelcc336/336-skills --skill image-gen-336 --global
 ```
 
-如果使用的是自己的 fork，请将 `ninelcc336/336-image-gen` 替换为对应的 GitHub 仓库。
+如果使用的是自己的 fork，请将 `ninelcc336/336-skills` 替换为对应的 GitHub 仓库。
 
-这条命令安装的是 Codex Skill，使 agent 能发现并使用它；它不会创建名为 `336-image-gen` 的全局 CLI 命令。用户明确指定本 Skill 后，agent 会在后台通过 Bun 或 `tsx` 执行内部脚本，用户不需要手动执行命令。
+这条命令安装的是 Codex Skill，使 agent 能发现并使用它；它不会创建名为 `image-gen-336` 的全局 CLI 命令。用户明确指定本 Skill 后，agent 会在后台通过 Bun 或 `tsx` 执行内部脚本，用户不需要手动执行命令。
 
 本地开发或直接从仓库运行：
 
 ```bash
-bun skills/336-image-gen/scripts/main.ts --prompt "A quiet mountain lake" --image out/lake.png
+bun skills/image-gen-336/scripts/main.ts --prompt "A quiet mountain lake" --image out/lake.png
 ```
 
 如果没有 Bun：
 
 ```bash
-npx -y tsx skills/336-image-gen/scripts/main.ts --prompt "A quiet mountain lake" --image out/lake.png
+npx -y tsx skills/image-gen-336/scripts/main.ts --prompt "A quiet mountain lake" --image out/lake.png
 ```
 
-仓库结构与 `pen-design` 一致，根目录 README 不属于可安装 Skill：
+图片技能在仓库中的目录结构：
 
 ```text
-336-image-gen/
+image-gen-336/
 ├── README.md
 └── skills/
-    └── 336-image-gen/
+    └── image-gen-336/
         ├── SKILL.md
         ├── agents/openai.yaml
         ├── references/
@@ -48,7 +48,7 @@ Skill 的安装范围和 API 配置范围可以分别选择。全局安装适合
 在任意位置执行：
 
 ```bash
-npx skills add ninelcc336/336-image-gen --skill 336-image-gen --global
+npx skills add ninelcc336/336-skills --skill image-gen-336 --global
 ```
 
 全局安装后，Codex 或兼容 Skills 的 agent 可以在不同项目中发现这个 Skill。全局配置文件放在当前用户目录：
@@ -81,7 +81,7 @@ relay:
 进入项目根目录后，不带 `--global` 安装：
 
 ```bash
-npx skills add ninelcc336/336-image-gen --skill 336-image-gen
+npx skills add ninelcc336/336-skills --skill image-gen-336
 ```
 
 项目级配置放在该项目根目录：
@@ -123,7 +123,7 @@ relay:
 用户需要在请求中明确指定这个 Skill，例如：
 
 ```text
-使用 336-image-gen，生成一张 2K、16:9 的电商主图，参考图使用这个 URL，并保存到项目素材目录。
+使用 image-gen-336，生成一张 2K、16:9 的电商主图，参考图使用这个 URL，并保存到项目素材目录。
 ```
 
 普通的“生成图片”“修改图片”请求不会自动触发本 Skill。明确指定后，agent 从请求中提取 provider、模型、提示词、参考图、分辨率、比例和输出路径，在后台调用脚本，完成后返回生成文件，而不是把 CLI 命令交给用户。
@@ -195,7 +195,7 @@ $env:IMAGE_RELAY_API_KEY = "<your-relay-api-key>"
 单图：
 
 ```bash
-bun skills/336-image-gen/scripts/main.ts \
+bun skills/image-gen-336/scripts/main.ts \
   --provider official \
   --model gpt-image-2 \
   --prompt "A red fox in a snowy forest" \
@@ -207,7 +207,7 @@ bun skills/336-image-gen/scripts/main.ts \
 使用一个或多个提示词文件：
 
 ```bash
-bun skills/336-image-gen/scripts/main.ts \
+bun skills/image-gen-336/scripts/main.ts \
   --prompt "Editorial illustration" \
   --promptfiles prompts/style.md prompts/lighting.md \
   --image out/editorial.png
@@ -216,7 +216,7 @@ bun skills/336-image-gen/scripts/main.ts \
 参考图：
 
 ```bash
-bun skills/336-image-gen/scripts/main.ts \
+bun skills/image-gen-336/scripts/main.ts \
   --provider relay \
   --prompt "Keep the subject identity and change the background to a clean studio" \
   --ref refs/subject.png refs/style.jpg \
@@ -253,7 +253,7 @@ bun skills/336-image-gen/scripts/main.ts \
 保存为 `jobs/batch.json` 后执行：
 
 ```bash
-bun skills/336-image-gen/scripts/main.ts --batchfile jobs/batch.json --jobs 2 --json
+bun skills/image-gen-336/scripts/main.ts --batchfile jobs/batch.json --jobs 2 --json
 ```
 
 批量任务中的 `image`、`promptFiles` 和 `ref` 路径都相对 `batch.json` 所在目录解析。每个任务必须有自己的输出路径；任务会独立成功或失败，`--jobs` 只限制同时运行的任务数，最终有失败任务时进程返回非零状态。
@@ -340,14 +340,14 @@ relay 的 `base_url` 可以写成带 `/v1` 或不带 `/v1` 的地址。当前 `d
 测试使用 mock `fetch`，不会调用真实图片 API：
 
 ```bash
-bun test skills/336-image-gen/scripts
+bun test skills/image-gen-336/scripts
 ```
 
 测试覆盖参数解析、配置和 provider 选择、请求体与 multipart edits、relay 的 base64/URL 响应、重试规则、参考图校验、批量路径和并发限制以及敏感信息脱敏。
 
 详细参数、批量格式和 provider 约束见：
 
-- [使用说明](skills/336-image-gen/references/usage.md)
-- [配置说明](skills/336-image-gen/references/config.md)
-- [官方 provider](skills/336-image-gen/references/providers/official.md)
-- [relay provider](skills/336-image-gen/references/providers/relay.md)
+- [使用说明](skills/image-gen-336/references/usage.md)
+- [配置说明](skills/image-gen-336/references/config.md)
+- [官方 provider](skills/image-gen-336/references/providers/official.md)
+- [relay provider](skills/image-gen-336/references/providers/relay.md)

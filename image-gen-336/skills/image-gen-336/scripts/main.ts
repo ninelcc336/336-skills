@@ -105,9 +105,9 @@ const PROVIDERS: Record<Provider, ProviderModule> = {
  */
 export function printUsage(): void {
   console.log(`用法:
-  bun 336-image-gen/scripts/main.ts --prompt "A cat" --image cat.png
-  npx -y tsx 336-image-gen/scripts/main.ts --promptfiles prompt.md --image out.png
-  bun 336-image-gen/scripts/main.ts --batchfile batch.json --jobs 4
+  bun image-gen-336/scripts/main.ts --prompt "A cat" --image cat.png
+  npx -y tsx image-gen-336/scripts/main.ts --promptfiles prompt.md --image out.png
+  bun image-gen-336/scripts/main.ts --batchfile batch.json --jobs 4
 
 选项:
   -p, --prompt <text>       文生图提示词
