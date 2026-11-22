@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -351,20 +352,25 @@ export async function loadEnvFile(filePath: string): Promise<Record<string, stri
   }
 }
 
+/** 按优先级列出项目配置与用户配置，用户配置按文件兼容旧位置。 */
+function configFiles(cwd: string, home: string, filename: string): string[] {
+  const current = path.join(home, ".336", "image-gen-336", filename);
+  const legacy = path.join(home, ".336-image-gen", filename);
+  const userFile = existsSync(current) ? current : legacy;
+  if (path.relative(home, cwd) === "") return [userFile];
+  return [path.join(cwd, ".336-image-gen", filename), userFile];
+}
+
 /**
- * 按用户目录凭据文件、项目凭据文件的顺序补齐 API key；进程环境始终优先。
+ * 保留进程已设置的凭据，其余依次从项目配置、用户配置补齐。
  * 非敏感配置不从 .env 加载，避免与 EXTEND.md 重合。
  */
 export async function loadEnv(cwd = process.cwd(), home = homedir()): Promise<void> {
-  const homeEnv = await loadEnvFile(path.join(home, ".336-image-gen", ".env"));
-  const projectEnv = await loadEnvFile(path.join(cwd, ".336-image-gen", ".env"));
-  const inheritedKeys = new Set(Object.keys(process.env));
-
-  for (const [key, value] of Object.entries(homeEnv)) {
-    if (!inheritedKeys.has(key)) process.env[key] = value;
-  }
-  for (const [key, value] of Object.entries(projectEnv)) {
-    if (!inheritedKeys.has(key)) process.env[key] = value;
+  const layers = await Promise.all(configFiles(cwd, home, ".env").map(loadEnvFile));
+  for (const layer of layers) {
+    for (const [key, value] of Object.entries(layer)) {
+      process.env[key] ??= value;
+    }
   }
 }
 
@@ -468,12 +474,7 @@ export async function loadExtendConfig(
   cwd = process.cwd(),
   home = homedir(),
 ): Promise<Partial<ExtendConfig>> {
-  const candidates = [
-    path.join(cwd, ".336-image-gen", "EXTEND.md"),
-    path.join(home, ".336-image-gen", "EXTEND.md"),
-  ];
-
-  for (const filePath of candidates) {
+  for (const filePath of configFiles(cwd, home, "EXTEND.md")) {
     try {
       const content = await readFile(filePath, "utf8");
       const yaml = extractYamlFrontMatter(content);

@@ -54,8 +54,8 @@ npx skills add ninelcc336/336-skills --skill image-gen-336 --global
 全局安装后，Codex 或兼容 Skills 的 agent 可以在不同项目中发现这个 Skill。全局配置文件放在当前用户目录：
 
 ```text
-%USERPROFILE%\.336-image-gen\.env
-%USERPROFILE%\.336-image-gen\EXTEND.md
+%USERPROFILE%\.336\image-gen-336\.env
+%USERPROFILE%\.336\image-gen-336\EXTEND.md
 ```
 
 其中 `.env` 只保存 API key；relay 地址、模型和图片默认参数统一写入 `EXTEND.md`。例如全局 relay 配置可以写成：
@@ -132,7 +132,7 @@ relay:
 
 | 使用范围 | API key 文件 | relay URL 文件 |
 | --- | --- | --- |
-| 全局 | `%USERPROFILE%\.336-image-gen\.env` | `%USERPROFILE%\.336-image-gen\EXTEND.md` 的 `relay.base_url` |
+| 全局 | `%USERPROFILE%\.336\image-gen-336\.env` | `%USERPROFILE%\.336\image-gen-336\EXTEND.md` 的 `relay.base_url` |
 | 项目级 | `<项目根>\.336-image-gen\.env` | `<项目根>\.336-image-gen\EXTEND.md` 的 `relay.base_url` |
 
 `official` 始终使用 `https://api.openai.com/v1`，没有可配置的官方 base URL。`relay` 使用 `EXTEND.md` 中的 `relay.base_url`，地址可以带或不带 `/v1`，脚本会自动规范化。
@@ -165,7 +165,7 @@ relay:
 3. 如果使用 relay，中转站地址是什么。
 4. 非敏感配置保存到当前项目还是用户目录。
 
-API key 只能通过环境变量配置，不能直接贴到对话中，也不能写进 `EXTEND.md`。环境变量可以由启动进程提供，也可以写入不会提交到 Git 的 `.336-image-gen/.env` 文件。Codex OAuth 或 ChatGPT 登录令牌不是 `OPENAI_API_KEY`。
+API key 只能通过环境变量配置，不能直接贴到对话中，也不能写进 `EXTEND.md`。环境变量可以由启动进程提供，也可以写入上表中对应的 `.env` 文件。Codex OAuth 或 ChatGPT 登录令牌不是 `OPENAI_API_KEY`。
 
 例如，使用官方 provider 时在当前 shell 配置：
 
@@ -284,7 +284,9 @@ bun skills/image-gen-336/scripts/main.ts --batchfile jobs/batch.json --jobs 2 --
 可选配置文件路径如下，项目配置优先：
 
 1. `.336-image-gen/EXTEND.md`
-2. 用户目录下的 `.336-image-gen/EXTEND.md`
+2. `~/.336/image-gen-336/EXTEND.md`
+
+全局配置按文件兼容旧目录 `~/.336-image-gen/`，迁移时可将其中的 `.env` 和 `EXTEND.md` 移至 `~/.336/image-gen-336/`。
 
 推荐格式：
 

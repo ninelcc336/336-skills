@@ -1,0 +1,5 @@
+interface:
+  display_name: "Who am I"
+  short_description: "按需查看个人 AI 实践和近期活动，将简短背景带入当前对话"
+policy:
+  allow_implicit_invocation: false

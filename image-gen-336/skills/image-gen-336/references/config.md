@@ -5,7 +5,9 @@
 脚本按以下顺序读取第一个存在的文件：
 
 1. 项目：`.336-image-gen/EXTEND.md`
-2. 用户目录：`~/.336-image-gen/EXTEND.md`
+2. 用户目录：`~/.336/image-gen-336/EXTEND.md`
+
+全局 `.env` 也放在 `~/.336/image-gen-336/`。如果某个全局配置文件尚未迁入，脚本会从旧目录 `~/.336-image-gen/` 读取同名文件。
 
 只保存非敏感配置，包括 provider、模型、relay 地址/dialect、质量、分辨率、比例和默认像素尺寸。API key 不能写进 `EXTEND.md`。
 

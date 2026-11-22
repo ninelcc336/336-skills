@@ -117,6 +117,12 @@ test("EXTEND.md 读取、YAML 解析和配置优先级符合约定", async (t: T
     path.join(home, ".336-image-gen", "EXTEND.md"),
     "---\ndefault_provider: relay\ndefault_quality: normal\n---\n",
   );
+  assert.equal((await loadExtendConfig(project, home)).default_quality, "normal");
+  const userConfig = path.join(home, ".336", "image-gen-336");
+  await fs.mkdir(userConfig, { recursive: true });
+  await fs.writeFile(path.join(userConfig, "EXTEND.md"), "---\ndefault_provider: relay\ndefault_quality: 2k\n---\n");
+  assert.equal((await loadExtendConfig(project, home)).default_quality, "2k");
+  assert.equal((await loadExtendConfig(home, home)).default_quality, "2k");
   await fs.writeFile(
     path.join(project, ".336-image-gen", "EXTEND.md"),
     "---\n" +
@@ -190,9 +196,20 @@ test("env 文件按用户目录、项目目录和已继承环境的优先级读�
   await fs.mkdir(path.join(project, ".336-image-gen"), { recursive: true });
   await fs.mkdir(path.join(home, ".336-image-gen"), { recursive: true });
   await fs.writeFile(path.join(home, ".336-image-gen", ".env"), "OPENAI_API_KEY=home\n");
+  await loadEnv(project, home);
+  assert.equal(process.env.OPENAI_API_KEY, "home");
+  delete process.env.OPENAI_API_KEY;
+  const userConfig = path.join(home, ".336", "image-gen-336");
+  await fs.mkdir(userConfig, { recursive: true });
+  await fs.writeFile(path.join(userConfig, ".env"), "OPENAI_API_KEY=current\nIMAGE_RELAY_API_KEY=relay\n");
+  await loadEnv(home, home);
+  assert.equal(process.env.OPENAI_API_KEY, "current");
+  delete process.env.OPENAI_API_KEY;
+  process.env.IMAGE_RELAY_API_KEY = "inherited";
   await fs.writeFile(path.join(project, ".336-image-gen", ".env"), "OPENAI_API_KEY=project\n");
   await loadEnv(project, home);
   assert.equal(process.env.OPENAI_API_KEY, "project");
+  assert.equal(process.env.IMAGE_RELAY_API_KEY, "inherited");
   assert.equal((await loadEnvFile(path.join(project, ".336-image-gen", ".env"))).OPENAI_API_KEY, "project");
 
   const invalidEnvPath = path.join(project, ".336-image-gen", "invalid.env");
