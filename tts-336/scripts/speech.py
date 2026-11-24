@@ -8,17 +8,10 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-MODELS = ('voxcpm2', 'cosyvoice')
 ENV_FILE = Path(__file__).resolve().parents[1] / '.env'
 
 
-def main():
-    parser = argparse.ArgumentParser(description='用 Voice Studio 将口播稿合成为 WAV')
-    parser.add_argument('script', type=Path, help='UTF-8 口播稿')
-    parser.add_argument('--output', type=Path, help='WAV 文件路径，默认与稿件同名')
-    parser.add_argument('--model', choices=MODELS, help='覆盖 .env 中的默认模型')
-    args = parser.parse_args()
-
+def read_settings():
     settings = {}
     for line in ENV_FILE.read_text(encoding='utf-8-sig').splitlines():
         line = line.strip()
@@ -27,10 +20,25 @@ def main():
             if not separator:
                 raise ValueError('.env 配置应使用 KEY=VALUE 格式')
             settings[key.strip()] = value.strip()
+    return settings
 
-    model = args.model or settings['MODEL']
-    if model not in MODELS:
-        raise ValueError('.env 的 MODEL 应为 voxcpm2 或 cosyvoice')
+
+def selected_model(override, settings):
+    model = (settings.get('MODEL', '') if override is None else override).strip()
+    if not model:
+        raise ValueError('请用 --model 或 .env 的 MODEL 指定合成模型')
+    return model
+
+
+def main():
+    parser = argparse.ArgumentParser(description='用 Voice Studio 将口播稿合成为 WAV')
+    parser.add_argument('script', type=Path, help='UTF-8 口播稿')
+    parser.add_argument('--output', type=Path, help='WAV 文件路径，默认与稿件同名')
+    parser.add_argument('--model', help='服务支持的模型名，覆盖 .env 中的 MODEL')
+    args = parser.parse_args()
+
+    settings = read_settings()
+    model = selected_model(args.model, settings)
     speed = float(settings['SPEED'])
     if not 0.25 <= speed <= 4:
         raise ValueError('.env 的 SPEED 应在 0.25–4.0 之间')
