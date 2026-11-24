@@ -7,10 +7,10 @@
 使用 Skills CLI 从 `336-skills` 仓库安装：
 
 ```bash
-npx skills add ninelcc336/336-skills --skill image-gen-336 --global
+npx skills add https://github.com/ninelcc336/336-skills/tree/main/image-gen-336/skills/image-gen-336 --skill image-gen-336 --global
 ```
 
-如果使用的是自己的 fork，请将 `ninelcc336/336-skills` 替换为对应的 GitHub 仓库。
+如果使用的是自己的 fork，请替换 URL 里的仓库和分支。
 
 这条命令安装的是 Codex Skill，使 agent 能发现并使用它；它不会创建名为 `image-gen-336` 的全局 CLI 命令。用户明确指定本 Skill 后，agent 会在后台通过 Bun 或 `tsx` 执行内部脚本，用户不需要手动执行命令。
 
@@ -48,7 +48,7 @@ Skill 的安装范围和 API 配置范围可以分别选择。全局安装适合
 在任意位置执行：
 
 ```bash
-npx skills add ninelcc336/336-skills --skill image-gen-336 --global
+npx skills add https://github.com/ninelcc336/336-skills/tree/main/image-gen-336/skills/image-gen-336 --skill image-gen-336 --global
 ```
 
 全局安装后，Codex 或兼容 Skills 的 agent 可以在不同项目中发现这个 Skill。全局配置文件放在当前用户目录：
@@ -81,7 +81,7 @@ relay:
 进入项目根目录后，不带 `--global` 安装：
 
 ```bash
-npx skills add ninelcc336/336-skills --skill image-gen-336
+npx skills add https://github.com/ninelcc336/336-skills/tree/main/image-gen-336/skills/image-gen-336 --skill image-gen-336
 ```
 
 项目级配置放在该项目根目录：

@@ -4,4 +4,4 @@
 
 ## 更新本机 Skill
 
-将改动提交并推送到 GitHub 后，通过 `npx skills update -g <Skill 名>` 更新本机安装。首次安装使用 `npx skills add ninelcc336/336-skills -g -a codex -s <Skill 名>`。
+将改动提交并推送到 GitHub 后，通过 `npx skills update -g <Skill 名>` 更新本机安装。首次安装命令见 [README](README.md#安装到-codex)。
