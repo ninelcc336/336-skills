@@ -1,6 +1,6 @@
 interface:
   display_name: "Image Gen 336"
-  short_description: "Generate and edit images via OpenAI-compatible APIs"
+  short_description: "Generate and edit images or check Katuai API history"
   default_prompt: "Use $image-gen-336 to generate or edit an image from my requirements."
 
 policy:

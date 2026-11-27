@@ -2,7 +2,15 @@
 
 ## Agent 调用
 
-该文件描述执行器的内部参数，不要求最终用户手动执行命令。只有用户明确指定 `image-gen-336` 或要求使用本 Skill 后，Codex、Claude Code 等 agent 才应从自然语言请求提取这些值，在后台调用 `scripts/main.ts`，并在完成后返回生成文件路径；普通图片请求不得自动调用。
+该文件描述执行器的内部参数。收到用户明确调用后，agent 在后台执行 `scripts/main.ts`，并返回生成文件路径或历史记录。
+
+## Katuai 历史调用
+
+```bash
+bun image-gen-336/scripts/main.ts --history --page 1 --page-size 10
+```
+
+`--history` 放在第一项。页码从 1 开始，默认每页 10 条，最多 50 条。脚本输出记录和分页信息，范围为当前 Katuai API Key 最近 3 天的调用。[Katuai API 文档](https://www.katuai.cn/open-api)
 
 ## 参数
 

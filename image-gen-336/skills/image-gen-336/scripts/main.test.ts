@@ -227,6 +227,50 @@ test("Katuai 默认使用 2.6，且 4K 必须来自单图或批量请求", async
   assert.equal(resolveModel("relay", makeArgs({ relayBaseUrl: "https://relay.example.test" }), {}), "gpt-image-2");
 });
 
+test("Katuai 历史查询使用 GET 和分页参数，只输出调用摘要", async (t: TestContext) => {
+  const root = await makeTempDir("336-image-gen-history-");
+  const configDir = path.join(root, ".336-image-gen");
+  const configPath = path.join(configDir, "EXTEND.md");
+  const options = { cwd: root, home: path.join(root, "home") };
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  useEnv(t, { OPENAI_API_KEY: null, IMAGE_RELAY_API_KEY: "katuai-test" });
+  await fs.mkdir(configDir);
+  await fs.writeFile(configPath, "---\nrelay:\n  base_url: https://www.katuai.cn\n---\n");
+
+  const requests: string[] = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    requests.push(String(url));
+    assert.equal(init?.method ?? "GET", "GET");
+    assert.equal(new Headers(init?.headers).get("Authorization"), "Bearer katuai-test");
+    assert.equal(init?.body, undefined);
+    return Response.json({
+      data: [{
+        task_id: "task-1", request_id: "request-1", status: 2, status_label: "succeeded",
+        created_at: "2026-11-27T09:00:00",
+        request: { model: "gpt-image-2.6-sunburst", size: "2K", prompt: "original prompt" },
+        result: { image: { url: "https://example.test/private-result.png" } },
+      }],
+      api_key: { name: "test key name" },
+    });
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const result = await execute(["--history"], options);
+  assert.equal(result.mode, "history");
+  if (result.mode !== "history") assert.fail("Expected history results");
+  assert.equal(result.result.data[0]?.model, "gpt-image-2.6-sunburst");
+  assert.doesNotMatch(JSON.stringify(result), /original prompt|private-result\.png|test key name/);
+  await execute(["--history", "--page", "2", "--page-size", "50"], options);
+  await assert.rejects(() => execute(["--history", "--page-size", "51"], options), /at most 50/);
+  await fs.writeFile(configPath, "---\nrelay:\n  base_url: https://other.example.test\n---\n");
+  await assert.rejects(() => execute(["--history"], options), /Katuai history requires relay\.base_url/);
+  assert.deepEqual(requests, [
+    "https://www.katuai.cn/v1/images/history?page=1&page_size=10",
+    "https://www.katuai.cn/v1/images/history?page=2&page_size=50",
+  ]);
+});
+
 test("env 文件按用户目录、项目目录和已继承环境的优先级读取", async (t: TestContext) => {
   const root = await makeTempDir("336-image-gen-env-");
   const project = path.join(root, "project");

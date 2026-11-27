@@ -59,7 +59,12 @@ export type BatchExecution = {
   results: TaskResult[];
 };
 
-export type ExecutionResult = SingleExecution | BatchExecution;
+type HistoryExecution = {
+  mode: "history";
+  result: Awaited<ReturnType<typeof relay.getKatuaiHistory>>;
+};
+
+export type ExecutionResult = SingleExecution | BatchExecution | HistoryExecution;
 
 type PreparedTask = {
   id: string;
@@ -108,6 +113,7 @@ export function printUsage(): void {
   bun image-gen-336/scripts/main.ts --prompt "A cat" --image cat.png
   npx -y tsx image-gen-336/scripts/main.ts --promptfiles prompt.md --image out.png
   bun image-gen-336/scripts/main.ts --batchfile batch.json --jobs 4
+  bun image-gen-336/scripts/main.ts --history [--page 1] [--page-size 10]
 
 选项:
   -p, --prompt <text>       文生图提示词
@@ -1051,19 +1057,43 @@ async function runBatch(args: CliArgs, config: Partial<ExtendConfig>): Promise<B
 }
 
 /**
- * 运行 Skill 的可测试入口：加载环境和配置后选择单图或批量流程，但不直接打印结果。
+ * 运行 Skill 的可测试入口，按参数执行生图或读取 Katuai 调用历史。
  */
 export async function execute(
   argv: string[] = process.argv.slice(2),
   options: ExecutionOptions = {},
 ): Promise<ExecutionResult | { mode: "help" }> {
-  const args = parseArgs(argv);
-  if (args.help) return { mode: "help" };
+  const historyMode = argv[0] === "--history";
+  const args = historyMode ? null : parseArgs(argv);
+  if (args?.help || (historyMode && argv.length === 2 && (argv[1] === "-h" || argv[1] === "--help"))) {
+    return { mode: "help" };
+  }
 
   const cwd = options.cwd ?? process.cwd();
   const home = options.home ?? homedir();
   await loadEnv(cwd, home);
   const config = await loadExtendConfig(cwd, home);
+  if (!args) {
+    let page = 1;
+    let pageSize = 10;
+    for (let index = 1; index < argv.length; index += 2) {
+      const option = argv[index];
+      if (option !== "--page" && option !== "--page-size") {
+        throw new Error(`Unknown history option: ${option}`);
+      }
+      const raw = argv[index + 1] ?? "";
+      const value = Number(raw);
+      if (!/^\d+$/.test(raw) || !Number.isSafeInteger(value) || value < 1) {
+        throw new Error(`Invalid ${option}: expected a positive integer.`);
+      }
+      if (option === "--page") page = value;
+      else {
+        if (value > 50) throw new Error("Invalid --page-size: Katuai allows at most 50 items per page.");
+        pageSize = value;
+      }
+    }
+    return { mode: "history", result: await relay.getKatuaiHistory(config.relay?.base_url, page, pageSize) };
+  }
   if (args.batchFile) {
     args.batchFile = path.isAbsolute(args.batchFile)
       ? args.batchFile
@@ -1075,9 +1105,13 @@ export async function execute(
 }
 
 /**
- * 输出单图或批量结果；批量部分失败时设置非零退出码但仍保留已成功文件。
+ * 输出查询或生图结果。批量部分失败时保留已生成文件并设置非零退出码。
  */
 function printExecutionResult(result: ExecutionResult, json: boolean): void {
+  if (result.mode === "history") {
+    console.log(JSON.stringify(result.result, null, 2));
+    return;
+  }
   if (result.mode === "single") {
     if (json) {
       console.log(JSON.stringify({ ...result.result, savedImage: result.result.outputPath }, null, 2));
@@ -1129,8 +1163,8 @@ if (isDirectExecution(import.meta.url)) {
         printUsage();
         return;
       }
-      const args = parseArgs(process.argv.slice(2));
-      printExecutionResult(result, args.json);
+      const json = result.mode !== "history" && parseArgs(process.argv.slice(2)).json;
+      printExecutionResult(result, json);
     })
     .catch((error) => {
       console.error(safeErrorMessage(error));

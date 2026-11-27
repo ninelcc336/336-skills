@@ -7,6 +7,7 @@ import type { CliArgs } from "../types.ts";
 import { ImageGenerationError, isSafetyPolicyRejection, safeResponseSnippet } from "../types.ts";
 
 export const DEFAULT_RELAY_DIALECT: string = "openai-images";
+const KATUAI_ORIGINS = new Set(["https://www.katuai.cn", "https://katuai.cn"]);
 
 type RelayImageResponse = {
   data?: Array<{
@@ -21,6 +22,25 @@ type ImageRequestBody = {
   size: string;
 };
 
+type KatuaiHistoryResponse = {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+  has_more: boolean;
+  range: { days: number; since: string };
+  data: Array<{
+    task_id: string;
+    request_id: string;
+    status: number;
+    status_label: string;
+    created_at: string;
+    execution_mode?: string;
+    request?: { model?: string; size?: string; aspect_ratio?: string };
+    result?: { error_class?: string };
+  }>;
+};
+
 /**
  * 返回 relay provider 的内置默认模型；模型覆盖由 CLI 或 EXTEND.md 提供。
  */
@@ -30,6 +50,55 @@ export function getDefaultModel(baseUrl?: string | null): string {
     if (hostname === "www.katuai.cn" || hostname === "katuai.cn") return "gpt-image-2.6-sunburst";
   }
   return "gpt-image-2";
+}
+
+/**
+ * 查询当前 Katuai Key 的调用记录，只返回列表需要的字段。
+ */
+export async function getKatuaiHistory(baseUrl: string | null | undefined, page: number, pageSize: number) {
+  if (!baseUrl || !KATUAI_ORIGINS.has(new URL(normalizeRelayBaseUrl(baseUrl)).origin)) {
+    throw new Error("Katuai history requires relay.base_url to point to https://www.katuai.cn in EXTEND.md.");
+  }
+  const apiKey = process.env.IMAGE_RELAY_API_KEY?.trim();
+  if (!apiKey) throw new Error("IMAGE_RELAY_API_KEY is required for Katuai history.");
+
+  const url = new URL("https://www.katuai.cn/v1/images/history");
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("page_size", String(pageSize));
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+    redirect: "error",
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!response.ok) {
+    throw new ImageGenerationError(
+      `Katuai history error (${response.status}): ${safeResponseSnippet(await response.text(), [apiKey])}`,
+      { status: response.status },
+    );
+  }
+
+  const history = await response.json() as KatuaiHistoryResponse;
+  if (!Array.isArray(history?.data)) throw new Error("Katuai history returned an invalid list.");
+  return {
+    page: history.page,
+    page_size: history.page_size,
+    total: history.total,
+    total_pages: history.total_pages,
+    has_more: history.has_more,
+    range: history.range,
+    data: history.data.map((record) => ({
+      task_id: record.task_id,
+      request_id: record.request_id,
+      status: record.status,
+      status_label: record.status_label,
+      created_at: record.created_at,
+      execution_mode: record.execution_mode,
+      model: record.request?.model,
+      size: record.request?.size,
+      aspect_ratio: record.request?.aspect_ratio,
+      error_class: record.result?.error_class || undefined,
+    })),
+  };
 }
 
 /**
