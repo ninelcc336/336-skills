@@ -39,7 +39,7 @@ relay:
 
 `CLI 参数 > EXTEND.md > Skill 内置默认值`
 
-分辨率通过 `default_resolution` 设置为 `1K`、`2K`、`4K`；图片比例通过 `default_aspect_ratio` 设置，例如 `1:1`、`16:9`、`9:16`；默认精确像素尺寸通过 `default_size` 设置。显式像素 `size` 优先于分辨率和比例；`512x512` 这类值仍可作为显式像素尺寸使用。重试策略通过 `default_retry_policy` 设置为 `manual` 或 `once`，默认建议使用 `manual`。
+将 `default_resolution` 留空，agent 会按用途选择 1K 或 2K。配置也可为未传尺寸的脚本调用提供 1K 或 2K 默认值。执行器会忽略默认配置里的 4K。图片比例通过 `default_aspect_ratio` 设置。只有请求未传入 `size` 或 `resolution` 时，才采用 `default_size`，其尺寸限于常规档位（长边至多 3072 像素，面积至多 2048×2048）。显式 `size` 优先于分辨率和比例。重试策略通过 `default_retry_policy` 设置为 `manual` 或 `once`，默认建议使用 `manual`。
 
 脚本进程中原本已经存在的 API key 不会被 `.env` 覆盖。模型解析优先级为：
 
@@ -49,7 +49,7 @@ relay:
 
 `--retry-once > batch.retryPolicy > EXTEND.md default_retry_policy > manual`
 
-非敏感模型、地址和尺寸配置不从 `.env` 或环境变量读取。内置默认模型为 `gpt-image-2`。
+非敏感模型、地址和尺寸配置不从 `.env` 或环境变量读取。Katuai relay 的内置默认模型为 `gpt-image-2.6-sunburst`，官方接口和其他兼容 relay 的内置默认模型为 `gpt-image-2`。
 
 ## Provider 自动选择
 

@@ -16,7 +16,7 @@
 | `--provider official\|relay` | 指定后端；优先级高于配置和自动判断。 |
 | `--model <id>` / `-m` | 指定模型。优先级最高。 |
 | `--ar <ratio>`、`--aspect-ratio <ratio>` | 正数宽高比，如 `1:1`、`16:9`、`9:16`、`4:3`。会转换成像素 `size`。 |
-| `--resolution <value>` | `1K`、`2K`、`4K`；与比例一起使用时按 Katuai 尺寸矩阵换算。 |
+| `--resolution <value>` | 与比例一起按 Katuai 尺寸矩阵换算。agent 按用途选择 `1K` 或 `2K`，只在用户本次明确要求时传 `4K`。 |
 | `--size <WxH>` | 正整数尺寸，如 `1024x1024`；显式值优先于分辨率和比例。 |
 | `--quality normal\|2k` | 旧版质量预设；未指定 resolution 时影响 `--ar` 换算出的目标长边，默认 `2k`。 |
 | `--ref <source...>` | 本地图片、HTTP(S) URL 或图片 Data URL，使用 edits 接口；单张最大 20 MB。 |

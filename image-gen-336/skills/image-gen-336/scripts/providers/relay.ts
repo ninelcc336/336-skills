@@ -24,7 +24,11 @@ type ImageRequestBody = {
 /**
  * 返回 relay provider 的内置默认模型；模型覆盖由 CLI 或 EXTEND.md 提供。
  */
-export function getDefaultModel(): string {
+export function getDefaultModel(baseUrl?: string | null): string {
+  if (baseUrl) {
+    const { hostname } = new URL(normalizeRelayBaseUrl(baseUrl));
+    if (hostname === "www.katuai.cn" || hostname === "katuai.cn") return "gpt-image-2.6-sunburst";
+  }
   return "gpt-image-2";
 }
 

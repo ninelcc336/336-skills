@@ -186,6 +186,47 @@ test("EXTEND.md 读取、YAML 解析和配置优先级符合约定", async (t: T
   );
 });
 
+test("Katuai 默认使用 2.6，且 4K 必须来自单图或批量请求", async (t: TestContext) => {
+  const root = await makeTempDir("336-image-gen-katuai-");
+  const configDir = path.join(root, ".336-image-gen");
+  const batchPath = path.join(root, "batch.json");
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  useEnv(t, { OPENAI_API_KEY: null, IMAGE_RELAY_API_KEY: "katuai-test" });
+  await fs.mkdir(configDir);
+  await fs.writeFile(path.join(configDir, "EXTEND.md"), [
+    "---", "default_provider: relay", "default_resolution: 4K", "default_size: 2880x2880",
+    "relay:", "  base_url: https://www.katuai.cn", "---", "",
+  ].join("\n"));
+  await fs.writeFile(batchPath, JSON.stringify([
+    { prompt: "preview", image: "out/preview.png", resolution: "1k" },
+    { prompt: "final", image: "out/final.png", resolution: "2k" },
+    { prompt: "4K final", image: "out/4k.png", resolution: "4k", ar: "16:9" },
+    { prompt: "exact size", image: "out/size.png", size: "2160x3840" },
+  ]));
+
+  const requests: Array<{ model: string; size: string }> = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    assert.equal(String(url), "https://www.katuai.cn/v1/images/generations");
+    const { model, size } = JSON.parse(String(options?.body));
+    requests.push({ model, size });
+    return Response.json({ data: [{ b64_json: "AA==" }] });
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const options = { cwd: root, home: path.join(root, "home") };
+  const single = await execute(["--prompt", "unspecified", "--image", path.join(root, "out/default.png")], options);
+  assert.equal(single.mode, "single");
+  const batch = await execute(["--batchfile", batchPath, "--jobs", "1"], options);
+  assert.equal(batch.mode, "batch");
+  assert.ok(batch.mode === "batch" && batch.results.every((result) => result.success));
+  assert.deepEqual(requests.map(({ size }) => size), [
+    "2048x2048", "1024x1024", "2048x2048", "3840x2160", "2160x3840",
+  ]);
+  assert.ok(requests.every(({ model }) => model === "gpt-image-2.6-sunburst"));
+  assert.equal(resolveModel("relay", makeArgs({ relayBaseUrl: "https://relay.example.test" }), {}), "gpt-image-2");
+});
+
 test("env 文件按用户目录、项目目录和已继承环境的优先级读取", async (t: TestContext) => {
   const root = await makeTempDir("336-image-gen-env-");
   const project = path.join(root, "project");

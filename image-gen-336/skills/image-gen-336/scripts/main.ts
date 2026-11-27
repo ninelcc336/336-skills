@@ -15,7 +15,7 @@ import {
 
 import * as official from "./providers/official.ts";
 import * as relay from "./providers/relay.ts";
-import { resolveImageSize, validatePixelSize, validateResolution } from "./size.ts";
+import { parsePixelSize, resolveImageSize, validatePixelSize, validateResolution } from "./size.ts";
 import {
   REFERENCE_IMAGE_EXTENSIONS,
   validateReferenceImageSource,
@@ -34,7 +34,6 @@ import {
 } from "./types.ts";
 
 export type ProviderModule = {
-  getDefaultModel: () => string;
   generateImage: (prompt: string, model: string, args: CliArgs) => Promise<Uint8Array>;
   validateArgs?: (model: string, args: CliArgs) => void;
   getDefaultOutputExtension?: () => string;
@@ -121,7 +120,7 @@ export function printUsage(): void {
   --ar <ratio>              宽高比，例如 1:1、16:9、9:16、4:3
   --aspect-ratio <ratio>    --ar 的可读别名
   --size <WxH>              显式像素尺寸，例如 1024x1024
-  --resolution <value>      分辨率档位：1K、2K、4K
+  --resolution <value>      常规分辨率为 1K、2K；明确要求时使用 4K
   --quality normal|2k       尺寸质量预设，默认 2k
   --ref <sources...>       本地路径、HTTP(S) URL 或图片 Data URL
   --retry-once              用户明确授权后最多额外重试一次
@@ -523,11 +522,15 @@ export function mergeConfig(
   if (merged.aspectRatio === null) {
     merged.aspectRatio = config.default_aspect_ratio ?? null;
   }
-  if (merged.resolution === null) {
-    merged.resolution = config.default_resolution ?? null;
+  if (merged.size === null && merged.resolution === null && config.default_size) {
+    const size = parsePixelSize(config.default_size);
+    // 配置只能提供常规尺寸。2K 矩阵的最长边是 3072，最大面积是 2048×2048。
+    if (size && Math.max(size.width, size.height) <= 3072 && size.width * size.height <= 2048 ** 2) {
+      merged.size = config.default_size;
+    }
   }
-  if (merged.size === null) {
-    merged.size = config.default_size ?? null;
+  if (merged.resolution === null && config.default_resolution !== "4k") {
+    merged.resolution = config.default_resolution ?? null;
   }
   if (merged.retryPolicy === null) {
     merged.retryPolicy = config.default_retry_policy ?? null;
@@ -557,7 +560,9 @@ export function resolveModel(
   const configuredModel = nonEmpty(config.default_model?.[provider]);
   if (configuredModel) return configuredModel;
 
-  return PROVIDERS[provider].getDefaultModel();
+  return provider === "relay"
+    ? relay.getDefaultModel(args.relayBaseUrl ?? config.relay?.base_url)
+    : official.getDefaultModel();
 }
 
 /**

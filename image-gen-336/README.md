@@ -150,7 +150,7 @@ relay:
 ### relay
 
 - 地址来自 `EXTEND.md` 的 `relay.base_url`，脚本会自动规范化是否包含 `/v1`。
-- API key 使用 `IMAGE_RELAY_API_KEY`，模型使用 `EXTEND.md` 的 `default_model.relay` 或内置默认模型。
+- API key 使用 `IMAGE_RELAY_API_KEY`。Katuai relay 默认使用 `gpt-image-2.6-sunburst`，可用 `EXTEND.md` 的 `default_model.relay` 指定其他模型。
 - 默认 dialect 是 `openai-images`，必须兼容 OpenAI Images API 的 `/images/generations` 和 `/images/edits`。
 - 响应需要提供 `data[0].b64_json` 或 `data[0].url`；URL 响应会由脚本下载后再保存。
 
@@ -268,7 +268,7 @@ bun skills/image-gen-336/scripts/main.ts --batchfile jobs/batch.json --jobs 2 --
 | `--provider official\|relay` | 显式选择后端。 |
 | `--model <id>`、`-m` | 指定模型。 |
 | `--ar <ratio>`、`--aspect-ratio <ratio>` | 宽高比，例如 `1:1`、`16:9`、`9:16`、`4:3`。 |
-| `--resolution <value>` | 分辨率档位：`1K`、`2K`、`4K`。 |
+| `--resolution <value>` | `1K` 或 `2K`。仅在本次请求明确要求时使用 `4K`。 |
 | `--size <WxH>` | 正整数像素尺寸，例如 `1024x1024`；优先于分辨率和比例。 |
 | `--quality normal\|2k` | 旧版质量预设，默认值为 `2k`；显式 resolution 优先。 |
 | `--ref <source...>` | 本地路径、HTTP(S) URL 或图片 Data URL；单张最大 20 MB。 |
@@ -277,7 +277,7 @@ bun skills/image-gen-336/scripts/main.ts --batchfile jobs/batch.json --jobs 2 --
 | `--retry-once` | 用户明确授权后最多额外发起一次远端请求。 |
 | `--json` | 输出结构化 JSON。 |
 
-每个请求只保存一张图片，不支持 `--n`。显式 `--size` 优先级最高；否则使用 `--resolution` 与比例换算尺寸。未指定时默认 2K 正方形。
+每个请求保存一张图片，执行器不接受 `--n`。显式 `--size` 优先级最高。用户未指定尺寸时，agent 根据用途选择 1K 或 2K，并传入 `--resolution`。未指定比例时默认正方形。
 
 ## EXTEND.md 配置
 
